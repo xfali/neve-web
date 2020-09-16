@@ -10,10 +10,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/xfali/fig"
-	"github.com/xfali/neve/neve-core/container"
-	"github.com/xfali/neve/neve-utils/log"
-	"github.com/xfali/neve/neve-web/gineve/midware"
-	"github.com/xfali/neve/neve-web/result"
+	"github.com/xfali/neve-core/container"
+	"github.com/xfali/neve-utils/log"
+	"github.com/xfali/neve-web/gineve/midware"
+	"github.com/xfali/neve-web/result"
 	"github.com/xfali/xlog"
 	"net/http"
 	"time"
@@ -88,7 +88,7 @@ func (p *Processor) start(conf fig.Properties) error {
 	//r.Use(logU.LogHttp())
 
 	for _, v := range p.compList {
-		Register(r)
+		v.Register(r)
 	}
 
 	type serverConf struct {
