@@ -1,0 +1,26 @@
+{
+  "Log": {
+    "ResponseBody": true,
+    "RequestBody": true,
+    "Level": "info",
+    "Client": true
+  },
+  "Server": {
+    "Port": 8080,
+    "ReadTimeout": 15,
+    "WriteTimeout": 15,
+    "IdleTimeout": 15
+  },
+  "DataSources": {
+    "default": {
+      "DriverName": "mysql",
+      "DriverInfo": "root:123@tcp(localhost:3306)/test?charset=utf8",
+      "MaxConn": 1000,
+      "MaxIdleConn": 500,
+      "ConnMaxLifetime": 15000
+    }
+  },
+  "userData": {
+    "value": "this is a test"
+  }
+}
