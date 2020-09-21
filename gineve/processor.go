@@ -11,7 +11,6 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"github.com/xfali/fig"
 	"github.com/xfali/neve-core/container"
-	"github.com/xfali/neve-utils/log"
 	"github.com/xfali/neve-web/gineve/midware"
 	"github.com/xfali/neve-web/result"
 	"github.com/xfali/xlog"
@@ -35,10 +34,16 @@ type Processor struct {
 	compList []Component
 }
 
-func NewProcessor() *Processor {
-	return &Processor{
-		logger: log.GetLogger(),
+type Opt func(p *Processor)
+
+func NewProcessor(opts ...Opt) *Processor {
+	ret := &Processor{
+		logger: xlog.GetLogger(),
 	}
+	for _, v := range opts {
+		v(ret)
+	}
+	return ret
 }
 
 func (p *Processor) Init(conf fig.Properties, container container.Container) error {
@@ -59,7 +64,7 @@ func (p *Processor) Process() error {
 	return p.start(p.conf)
 }
 
-func (p *Processor) Close() error {
+func (p *Processor) Destroy() error {
 	if p.server != nil {
 		return p.server.Close()
 	}
@@ -68,7 +73,10 @@ func (p *Processor) Close() error {
 
 func (p *Processor) start(conf fig.Properties) error {
 	if conf.Get(ConfigLogRequestBody, "false") == "true" {
-		binding.Validator = &midware.RequestBodyLogWriter{V: binding.Validator}
+		binding.Validator = &midware.RequestBodyLogWriter{
+			Logger: p.logger,
+			V:      binding.Validator,
+		}
 	}
 
 	r := gin.New()
@@ -131,4 +139,10 @@ func (p *Processor) parseBean(comp Component, o interface{}) error {
 	p.compList = append(p.compList, comp)
 
 	return nil
+}
+
+func OptSetLogger(logger xlog.Logger) Opt {
+	return func(p *Processor) {
+		p.logger = logger
+	}
 }

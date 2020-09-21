@@ -40,9 +40,10 @@ func (b *webBean) Register(engine gin.IRouter) {
 }
 
 func TestWebAndValue(t *testing.T) {
-	neve.RegisterProcessor(gineve.NewProcessor(), processor.NewValueProcessor(), &testProcess{})
-
 	app := neve.NewFileConfigApplication("assets/config-test.json")
+	app.RegisterBean(gineve.NewProcessor())
+	app.RegisterBean(processor.NewValueProcessor())
+	app.RegisterBean(&testProcess{})
 	app.RegisterBean(&webBean{})
 	app.Run()
 }
