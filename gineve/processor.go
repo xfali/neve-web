@@ -94,12 +94,8 @@ func (p *Processor) start(conf fig.Properties) error {
 	//	LogRespBody: conf.Get(ConfigLogRequestBody, "false") == "true",
 	//}
 	//r.Use(logU.LogHttp())
-
-	for _, v := range p.compList {
-		v.Register(r)
-	}
-
 	type serverConf struct {
+		ContextPath  string
 		Port         int
 		ReadTimeout  int
 		WriteTimeout int
@@ -119,6 +115,15 @@ func (p *Processor) start(conf fig.Properties) error {
 	if servConf.IdleTimeout == 0 {
 		servConf.IdleTimeout = 15
 	}
+
+	var router gin.IRouter = r
+	if servConf.ContextPath != "" {
+		router = router.Group(servConf.ContextPath)
+	}
+	for _, v := range p.compList {
+		v.Register(router)
+	}
+
 	s := &http.Server{
 		Addr:           fmt.Sprintf(":%d", servConf.Port),
 		Handler:        r,

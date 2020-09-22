@@ -6,6 +6,7 @@
     "Client": true
   },
   "Server": {
+    "ContextPath": "",
     "Port": 8080,
     "ReadTimeout": 15,
     "WriteTimeout": 15,
