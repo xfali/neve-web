@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/xfali/fig"
-	"github.com/xfali/neve-core/container"
+	"github.com/xfali/neve-core/bean"
 	"github.com/xfali/neve-web/gineve/midware"
 	"github.com/xfali/neve-web/result"
 	"github.com/xfali/xlog"
@@ -46,7 +46,7 @@ func NewProcessor(opts ...Opt) *Processor {
 	return ret
 }
 
-func (p *Processor) Init(conf fig.Properties, container container.Container) error {
+func (p *Processor) Init(conf fig.Properties, container bean.Container) error {
 	p.conf = conf
 	return nil
 }
@@ -64,7 +64,7 @@ func (p *Processor) Process() error {
 	return p.start(p.conf)
 }
 
-func (p *Processor) Destroy() error {
+func (p *Processor) BeanDestroy() error {
 	if p.server != nil {
 		return p.server.Close()
 	}
@@ -121,7 +121,7 @@ func (p *Processor) start(conf fig.Properties) error {
 		router = router.Group(servConf.ContextPath)
 	}
 	for _, v := range p.compList {
-		v.Register(router)
+		v.HttpRoutes(router)
 	}
 
 	s := &http.Server{

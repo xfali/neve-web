@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/xfali/fig"
-	"github.com/xfali/neve-core/container"
+	"github.com/xfali/neve-core/bean"
 	"github.com/xfali/neve-utils/log"
 	"github.com/xfali/neve-core"
 	"github.com/xfali/neve-core/processor"
@@ -25,7 +25,7 @@ type webBean struct {
 	P print  `inject:"testProcess.print"`
 }
 
-func (b *webBean) Register(engine gin.IRouter) {
+func (b *webBean) HttpRoutes(engine gin.IRouter) {
 	loghttp := midware.LogHttpUtil{
 		Logger:      log.GetLogger(),
 		LogRespBody: true,
@@ -60,7 +60,7 @@ func (d *dummy) Print(str string) {
 	fmt.Println("dummy!", str)
 }
 
-func (p *testProcess) Init(conf fig.Properties, container container.Container) error {
+func (p *testProcess) Init(conf fig.Properties, container bean.Container) error {
 	container.RegisterByName("testProcess.print", &dummy{})
 	return nil
 }

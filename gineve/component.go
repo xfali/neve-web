@@ -8,5 +8,5 @@ package gineve
 import "github.com/gin-gonic/gin"
 
 type Component interface {
-	Register(engine gin.IRouter)
+	HttpRoutes(engine gin.IRouter)
 }
