@@ -60,16 +60,26 @@ func (v *RequestBodyLogWriter) Engine() interface{} {
 	return v.V.Engine()
 }
 
+type logConfig struct {
+	RequestHeader  bool
+	RequestBody    bool
+	ResponseHeader bool
+	ResponseBody   bool
+	Level          string
+	Client         bool
+}
+
 type LogHttpUtil struct {
-	Logger      xlog.Logger
-	LogRespBody bool
+	Logger xlog.Logger
+	conf   logConfig
 }
 
 func NewLogHttpUtil(conf fig.Properties, logger xlog.Logger) *LogHttpUtil {
-	return &LogHttpUtil{
-		Logger:      logger,
-		LogRespBody: conf.Get("Log.ResponseBody", "false") == "true",
+	ret := &LogHttpUtil{
+		Logger: logger,
 	}
+	conf.GetValue("Log", &ret.conf)
+	return ret
 }
 
 func (util *LogHttpUtil) LogHttp() gin.HandlerFunc {
@@ -82,15 +92,18 @@ func (util *LogHttpUtil) LogHttp() gin.HandlerFunc {
 		requestId := idUtil.RandomId(16)
 		params := c.Params
 		querys := c.Request.URL.RawQuery
-		reqHeader := getHeaderStr(c.Request.Header)
+		reqHeader := ""
+		if util.conf.RequestHeader {
+			reqHeader = getHeaderStr(c.Request.Header)
+		}
 
 		c.Set(REQEUST_ID, requestId)
 
-		util.Logger.Infof("[Request %s] [path]: %s , [client ip]: %s , [method]: %s , [header]: %s , [params]: %v , [query]: %s \n",
+		util.Logger.Infof("[Request %s] [path]: %s , [client ip]: %s , [method]: %s , %s , [params]: %v , [query]: %s \n",
 			requestId, path, clientIP, method, reqHeader, params, querys)
 
 		var blw *ResponseBodyLogWriter
-		if util.LogRespBody {
+		if util.conf.ResponseBody {
 			blw = &ResponseBodyLogWriter{ResponseWriter: c.Writer}
 			c.Writer = blw
 		}
@@ -106,34 +119,36 @@ func (util *LogHttpUtil) LogHttp() gin.HandlerFunc {
 		statusCode := c.Writer.Status()
 
 		var data string
-		if util.LogRespBody {
+		if util.conf.ResponseBody {
 			data = blw.body.String()
 		}
-		rh := c.Writer.Header()
 		respHeader := ""
-		if rh != nil {
-			respHeader = getHeaderStr(rh.Clone())
+		if util.conf.ResponseHeader {
+			rh := c.Writer.Header()
+			if rh != nil {
+				respHeader = getHeaderStr(rh.Clone())
+			}
 		}
 		respId, _ := c.Get(REQEUST_ID)
-		util.Logger.Infof("[Response %s] [latency]: %d ms, [status]: %d , [header]: %s , [data]: %s\n",
+		util.Logger.Infof("[Response %s] [latency]: %d ms, [status]: %d , %s , [data]: %s\n",
 			respId.(string), latency/time.Millisecond, statusCode, respHeader, data)
 	}
 }
 
 func getHeaderStr(header http.Header) string {
+	buf := bytes.NewBuffer(nil)
+	buf.WriteString("[header]: ")
 	if len(header) > 0 {
-		buf := bytes.NewBuffer(nil)
 		for k, vs := range header {
 			buf.WriteString(k)
 			buf.WriteString("=")
 			for i := range vs {
 				buf.WriteString(vs[i])
-				if i < len(vs) - 1 {
+				if i < len(vs)-1 {
 					buf.WriteString(",")
 				}
 			}
 		}
-		return buf.String()
 	}
-	return ""
+	return buf.String()
 }

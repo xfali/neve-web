@@ -1,7 +1,9 @@
 {
   "Log": {
-    "ResponseBody": true,
+    "RequestHeader": true,
     "RequestBody": true,
+    "ResponseHeader": true,
+    "ResponseBody": true,
     "Level": "info",
     "Client": true
   },

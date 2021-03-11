@@ -26,6 +26,14 @@ const (
 //	neve.RegisterProcessor(NewProcessor())
 //}
 
+type serverConf struct {
+	ContextPath  string
+	Port         int
+	ReadTimeout  int
+	WriteTimeout int
+	IdleTimeout  int
+}
+
 type Processor struct {
 	conf   fig.Properties
 	logger xlog.Logger
@@ -94,13 +102,6 @@ func (p *Processor) start(conf fig.Properties) error {
 	//	LogRespBody: conf.Get(ConfigLogRequestBody, "false") == "true",
 	//}
 	//r.Use(logU.LogHttp())
-	type serverConf struct {
-		ContextPath  string
-		Port         int
-		ReadTimeout  int
-		WriteTimeout int
-		IdleTimeout  int
-	}
 	servConf := serverConf{}
 	conf.GetValue("Server", &servConf)
 	if servConf.Port == 0 {
