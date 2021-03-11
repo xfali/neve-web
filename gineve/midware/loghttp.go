@@ -7,12 +7,14 @@
 package midware
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/xfali/fig"
 	"github.com/xfali/goutils/idUtil"
 	"github.com/xfali/xlog"
+	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -80,11 +82,12 @@ func (util *LogHttpUtil) LogHttp() gin.HandlerFunc {
 		requestId := idUtil.RandomId(16)
 		params := c.Params
 		querys := c.Request.URL.RawQuery
+		reqHeader := getHeaderStr(c.Request.Header)
 
 		c.Set(REQEUST_ID, requestId)
 
-		util.Logger.Infof("[Request %s] [path]: %s, [client ip]: %s, [method]: %s, [params]: %v, [query]: %s\n",
-			requestId, path, clientIP, method, params, querys)
+		util.Logger.Infof("[Request %s] [path]: %s , [client ip]: %s , [method]: %s , [header]: %s , [params]: %v , [query]: %s \n",
+			requestId, path, clientIP, method, reqHeader, params, querys)
 
 		var blw *ResponseBodyLogWriter
 		if util.LogRespBody {
@@ -106,8 +109,31 @@ func (util *LogHttpUtil) LogHttp() gin.HandlerFunc {
 		if util.LogRespBody {
 			data = blw.body.String()
 		}
+		rh := c.Writer.Header()
+		respHeader := ""
+		if rh != nil {
+			respHeader = getHeaderStr(rh.Clone())
+		}
 		respId, _ := c.Get(REQEUST_ID)
-		util.Logger.Infof("[Response %s] [latency]: %d ms, [status]: %d, [data]: %s\n",
-			respId.(string), latency/time.Millisecond, statusCode, data)
+		util.Logger.Infof("[Response %s] [latency]: %d ms, [status]: %d , [header]: %s , [data]: %s\n",
+			respId.(string), latency/time.Millisecond, statusCode, respHeader, data)
 	}
+}
+
+func getHeaderStr(header http.Header) string {
+	if len(header) > 0 {
+		buf := bytes.NewBuffer(nil)
+		for k, vs := range header {
+			buf.WriteString(k)
+			buf.WriteString("=")
+			for i := range vs {
+				buf.WriteString(vs[i])
+				if i < len(vs) - 1 {
+					buf.WriteString(",")
+				}
+			}
+		}
+		return buf.String()
+	}
+	return ""
 }
