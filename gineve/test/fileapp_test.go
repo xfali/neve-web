@@ -12,7 +12,6 @@ import (
 	"github.com/xfali/neve-core"
 	"github.com/xfali/neve-core/bean"
 	"github.com/xfali/neve-core/processor"
-	"github.com/xfali/neve-utils/log"
 	"github.com/xfali/neve-web/gineve"
 	"github.com/xfali/neve-web/gineve/midware"
 	"github.com/xfali/neve-web/result"
@@ -21,20 +20,20 @@ import (
 )
 
 type webBean struct {
-	V string `fig:"Log.Level"`
-	P print  `inject:"testProcess.print"`
+	V          string //`fig:"Log.Level"`
+	P          print  `inject:"testProcess.print"`
+	HttpLogger midware.HttpLogger `inject:""`
 }
 
 func (b *webBean) HttpRoutes(engine gin.IRouter) {
-	loghttp := midware.LogHttpUtil{
-		Logger: log.GetLogger(),
-		Conf: midware.LogConfig{
-			RequestBody:    true,
-			RequestHeader:  true,
-			ResponseBody:   true,
-			ResponseHeader: true,
-		},
-	}
+	//loghttp := midware.LogHttpUtil{
+	//	Logger:        log.GetLogger(),
+	//	LogReqBody:    true,
+	//	LogReqHeader:  true,
+	//	LogRespBody:   true,
+	//	LogRespHeader: true,
+	//}
+	loghttp := b.HttpLogger
 	engine.GET("test", loghttp.LogHttp(), func(context *gin.Context) {
 		context.JSON(http.StatusOK, result.Ok(b.V))
 	})

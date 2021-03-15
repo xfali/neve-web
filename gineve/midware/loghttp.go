@@ -24,6 +24,10 @@ const (
 	REQEUST_ID = "_REQEUST_ID"
 )
 
+type HttpLogger interface {
+	LogHttp() gin.HandlerFunc
+}
+
 type requestBodyWrapper struct {
 	origin io.ReadCloser
 	body   *bytes.Buffer
@@ -34,7 +38,7 @@ func newRequestBodyWrapper(rc io.ReadCloser) *requestBodyWrapper {
 		origin: rc,
 		body:   bytes.NewBuffer(nil),
 	}
-	ret.body.WriteString("[data]: ")
+	ret.body.WriteString(" [data]: ")
 	return ret
 }
 
@@ -47,6 +51,11 @@ func (w *requestBodyWrapper) Read(b []byte) (int, error) {
 	i, err := w.origin.Read(b)
 	w.body.Write(b[:i])
 	return i, err
+}
+
+func (w *requestBodyWrapper) getBody() string {
+	w.body.WriteString(" ,")
+	return w.body.String()
 }
 
 func (w *requestBodyWrapper) Close() error {
@@ -68,7 +77,12 @@ func newResponseBodyWrapper(w gin.ResponseWriter) *responseBodyLogWrapper {
 		ResponseWriter: w,
 		body:           bytes.NewBuffer(nil),
 	}
+	ret.body.WriteString(" [data]: ")
 	return ret
+}
+
+func (w *responseBodyLogWrapper) getBody() string {
+	return w.body.String()
 }
 
 func (w *responseBodyLogWrapper) purge() {
@@ -102,98 +116,102 @@ func (v *RequestBodyLogWriter) Engine() interface{} {
 	return v.V.Engine()
 }
 
-type LogConfig struct {
-	RequestHeader  bool
-	RequestBody    bool
-	ResponseHeader bool
-	ResponseBody   bool
-}
-
 type LogHttpUtil struct {
 	Logger xlog.Logger
-	Conf   LogConfig
+	// with request header log
+	LogReqHeader bool `fig:"Log.RequestHeader"`
+	// with request body log
+	LogReqBody bool `fig:"Log.RequestBody"`
+	// with response header log
+	LogRespHeader bool `fig:"Log.ResponseHeader"`
+	// with response body log
+	LogRespBody bool `fig:"Log.ResponseBody"`
 }
+
+type DefaultHttpLogger LogHttpUtil
 
 func NewLogHttpUtil(conf fig.Properties, logger xlog.Logger) *LogHttpUtil {
 	ret := &LogHttpUtil{
 		Logger: logger,
 	}
-	conf.GetValue("Log", &ret.Conf)
+	fig.Fill(conf, ret)
 	return ret
 }
 
 func (util *LogHttpUtil) LogHttp() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		start := time.Now()
+	return util.log
+}
 
-		path := c.Request.URL.Path
-		clientIP := c.ClientIP()
-		method := c.Request.Method
-		requestId := idUtil.RandomId(16)
-		params := c.Params
-		querys := c.Request.URL.RawQuery
-		reqHeader := ""
-		if util.Conf.RequestHeader {
-			reqHeader = getHeaderStr(c.Request.Header)
-		}
+func (util *LogHttpUtil) log(c *gin.Context) {
+	start := time.Now()
 
-		//c.Set(REQEUST_ID, requestId)
-
-		var rbw *requestBodyWrapper = nil
-		if util.Conf.RequestBody {
-			rbw = newRequestBodyWrapper(c.Request.Body)
-			c.Request.Body = rbw
-			defer rbw.purge()
-		}
-
-		var blw *responseBodyLogWrapper
-		if util.Conf.ResponseBody {
-			blw = newResponseBodyWrapper(c.Writer)
-			c.Writer = blw
-			defer blw.purge()
-		}
-
-		// 处理请求
-		c.Next()
-
-		reqBody := ""
-		if util.Conf.RequestBody {
-			reqBody = rbw.body.String()
-		}
-		//util.Logger.Infof("[Request %s] [path]: %s , [client ip]: %s , [method]: %s , %s , [params]: %v , [query]: %s %s\n",
-		//	requestId, path, clientIP, method, reqHeader, params, querys, reqBody)
-
-		// 结束时间
-		end := time.Now()
-		//执行时间
-		latency := end.Sub(start)
-
-		statusCode := c.Writer.Status()
-
-		var data string
-		if util.Conf.ResponseBody {
-			data = blw.body.String()
-		}
-		respHeader := ""
-		if util.Conf.ResponseHeader {
-			rh := c.Writer.Header()
-			if rh != nil {
-				respHeader = getHeaderStr(rh.Clone())
-			}
-		}
-		//respId, _ := c.Get(REQEUST_ID)
-		util.Logger.Infof("\n[Request\t%s] [path]: %s , [client ip]: %s , [method]: %s , %s , [params]: %v , [query]: %s %s\n"+
-			"[Response\t%s] [latency]: %d ms, [status]: %d , %s , [data]: %s\n",
-			requestId, path, clientIP, method, reqHeader, params, querys, reqBody,
-			requestId, latency/time.Millisecond, statusCode, respHeader, data)
-		//util.Logger.Infof("[Response %s] [latency]: %d ms, [status]: %d , %s , [data]: %s\n",
-		//	respId.(string), latency/time.Millisecond, statusCode, respHeader, data)
+	path := c.Request.URL.Path
+	clientIP := c.ClientIP()
+	method := c.Request.Method
+	requestId := idUtil.RandomId(16)
+	params := c.Params
+	querys := c.Request.URL.RawQuery
+	reqHeader := ""
+	if util.LogReqHeader {
+		reqHeader = getHeaderStr(c.Request.Header)
 	}
+
+	//c.Set(REQEUST_ID, requestId)
+
+	var rbw *requestBodyWrapper = nil
+	if util.LogReqBody {
+		rbw = newRequestBodyWrapper(c.Request.Body)
+		c.Request.Body = rbw
+		defer rbw.purge()
+	}
+
+	var blw *responseBodyLogWrapper
+	if util.LogRespBody {
+		blw = newResponseBodyWrapper(c.Writer)
+		c.Writer = blw
+		defer blw.purge()
+	}
+
+	// 处理请求
+	c.Next()
+
+	reqBody := ""
+	if util.LogReqBody {
+		reqBody = rbw.getBody()
+	}
+	//util.Logger.Infof("[Request %s] [path]: %s , [client ip]: %s , [method]: %s , %s , [params]: %v , [query]: %s %s\n",
+	//	requestId, path, clientIP, method, reqHeader, params, querys, reqBody)
+
+	// 结束时间
+	end := time.Now()
+	//执行时间
+	latency := end.Sub(start)
+
+	statusCode := c.Writer.Status()
+
+	var data string
+	if util.LogRespBody {
+		data = blw.getBody()
+	}
+	respHeader := ""
+	if util.LogRespHeader {
+		rh := c.Writer.Header()
+		if rh != nil {
+			respHeader = getHeaderStr(rh.Clone())
+		}
+	}
+	//respId, _ := c.Get(REQEUST_ID)
+	util.Logger.Infof("\n[Request\t%s] [path]: %s , [client ip]: %s , [method]: %s %s [params]: %v , [query]: %s%s\n"+
+		"[Response\t%s] [latency]: %d ms, [status]: %d %s%s\n",
+		requestId, path, clientIP, method, reqHeader, params, querys, reqBody,
+		requestId, latency/time.Millisecond, statusCode, respHeader, data)
+	//util.Logger.Infof("[Response %s] [latency]: %d ms, [status]: %d , %s , [data]: %s\n",
+	//	respId.(string), latency/time.Millisecond, statusCode, respHeader, data)
 }
 
 func getHeaderStr(header http.Header) string {
 	buf := bytes.NewBuffer(nil)
-	buf.WriteString("[header]: ")
+	buf.WriteString(", [header]: ")
 	if len(header) > 0 {
 		for k, vs := range header {
 			buf.WriteString(k)
@@ -207,5 +225,6 @@ func getHeaderStr(header http.Header) string {
 			buf.WriteString(" ")
 		}
 	}
+	buf.WriteString(" ,")
 	return buf.String()
 }

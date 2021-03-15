@@ -55,6 +55,7 @@ func NewProcessor(opts ...Opt) *Processor {
 
 func (p *Processor) Init(conf fig.Properties, container bean.Container) error {
 	p.conf = conf
+	container.Register(midware.NewLogHttpUtil(conf, p.logger))
 	return nil
 }
 
