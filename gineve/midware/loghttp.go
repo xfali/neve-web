@@ -14,9 +14,9 @@ import (
 	"github.com/xfali/fig"
 	"github.com/xfali/goutils/idUtil"
 	"github.com/xfali/xlog"
+	"io"
 	"net/http"
 	"reflect"
-	"strings"
 	"time"
 )
 
@@ -24,14 +24,56 @@ const (
 	REQEUST_ID = "_REQEUST_ID"
 )
 
-type ResponseBodyLogWriter struct {
-	gin.ResponseWriter
-	body strings.Builder
+type requestBodyWrapper struct {
+	origin io.ReadCloser
+	body   *bytes.Buffer
 }
 
-func (w *ResponseBodyLogWriter) Write(b []byte) (int, error) {
+func newRequestBodyWrapper(rc io.ReadCloser) *requestBodyWrapper {
+	ret := &requestBodyWrapper{
+		origin: rc,
+		body:   bytes.NewBuffer(nil),
+	}
+	ret.body.WriteString("[data]: ")
+	return ret
+}
+
+func (w *requestBodyWrapper) purge() {
+	w.body.Reset()
+	w.body = nil
+}
+
+func (w *requestBodyWrapper) Read(b []byte) (int, error) {
+	i, err := w.origin.Read(b)
+	w.body.Write(b[:i])
+	return i, err
+}
+
+func (w *requestBodyWrapper) Close() error {
+	return w.origin.Close()
+}
+
+type responseBodyLogWrapper struct {
+	gin.ResponseWriter
+	body *bytes.Buffer
+}
+
+func (w *responseBodyLogWrapper) Write(b []byte) (int, error) {
 	w.body.Write(b)
 	return w.ResponseWriter.Write(b)
+}
+
+func newResponseBodyWrapper(w gin.ResponseWriter) *responseBodyLogWrapper {
+	ret := &responseBodyLogWrapper{
+		ResponseWriter: w,
+		body:           bytes.NewBuffer(nil),
+	}
+	return ret
+}
+
+func (w *responseBodyLogWrapper) purge() {
+	w.body.Reset()
+	w.body = nil
 }
 
 type RequestBodyLogWriter struct {
@@ -97,17 +139,29 @@ func (util *LogHttpUtil) LogHttp() gin.HandlerFunc {
 
 		c.Set(REQEUST_ID, requestId)
 
-		util.Logger.Infof("[Request %s] [path]: %s , [client ip]: %s , [method]: %s , %s , [params]: %v , [query]: %s \n",
-			requestId, path, clientIP, method, reqHeader, params, querys)
+		var rbw *requestBodyWrapper = nil
+		if util.Conf.RequestBody {
+			rbw = newRequestBodyWrapper(c.Request.Body)
+			c.Request.Body = rbw
+			defer rbw.purge()
+		}
 
-		var blw *ResponseBodyLogWriter
+		var blw *responseBodyLogWrapper
 		if util.Conf.ResponseBody {
-			blw = &ResponseBodyLogWriter{ResponseWriter: c.Writer}
+			blw = newResponseBodyWrapper(c.Writer)
 			c.Writer = blw
+			defer blw.purge()
 		}
 
 		// 处理请求
 		c.Next()
+
+		reqBody := ""
+		if util.Conf.RequestBody {
+			reqBody = rbw.body.String()
+		}
+		util.Logger.Infof("[Request %s] [path]: %s , [client ip]: %s , [method]: %s , %s , [params]: %v , [query]: %s %s\n",
+			requestId, path, clientIP, method, reqHeader, params, querys, reqBody)
 
 		// 结束时间
 		end := time.Now()
@@ -146,6 +200,7 @@ func getHeaderStr(header http.Header) string {
 					buf.WriteString(",")
 				}
 			}
+			buf.WriteString(" ")
 		}
 	}
 	return buf.String()

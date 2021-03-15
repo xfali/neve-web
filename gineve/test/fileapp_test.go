@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/xfali/fig"
+	"github.com/xfali/neve-core"
 	"github.com/xfali/neve-core/bean"
 	"github.com/xfali/neve-core/processor"
 	"github.com/xfali/neve-utils/log"
-	"github.com/xfali/neve-utils/neverror"
 	"github.com/xfali/neve-web/gineve"
 	"github.com/xfali/neve-web/gineve/midware"
 	"github.com/xfali/neve-web/result"
@@ -41,6 +41,16 @@ func (b *webBean) HttpRoutes(engine gin.IRouter) {
 
 	engine.GET("panic", loghttp.LogHttp(), func(context *gin.Context) {
 		panic("test!")
+	})
+
+	engine.POST("test", loghttp.LogHttp(), func(context *gin.Context) {
+		d, err := context.GetRawData()
+		if err != nil {
+			context.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		context.JSON(http.StatusOK, result.Ok(string(d)))
 	})
 }
 
