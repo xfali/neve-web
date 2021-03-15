@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/xfali/fig"
-	"github.com/xfali/neve-core"
 	"github.com/xfali/neve-core/bean"
 	"github.com/xfali/neve-core/processor"
 	"github.com/xfali/neve-utils/log"
+	"github.com/xfali/neve-utils/neverror"
 	"github.com/xfali/neve-web/gineve"
 	"github.com/xfali/neve-web/gineve/midware"
 	"github.com/xfali/neve-web/result"
@@ -27,8 +27,13 @@ type webBean struct {
 
 func (b *webBean) HttpRoutes(engine gin.IRouter) {
 	loghttp := midware.LogHttpUtil{
-		Logger:      log.GetLogger(),
-		LogRespBody: true,
+		Logger: log.GetLogger(),
+		Conf: midware.LogConfig{
+			RequestBody:    true,
+			RequestHeader:  true,
+			ResponseBody:   true,
+			ResponseHeader: true,
+		},
 	}
 	engine.GET("test", loghttp.LogHttp(), func(context *gin.Context) {
 		context.JSON(http.StatusOK, result.Ok(b.V))

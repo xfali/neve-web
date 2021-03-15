@@ -60,25 +60,23 @@ func (v *RequestBodyLogWriter) Engine() interface{} {
 	return v.V.Engine()
 }
 
-type logConfig struct {
+type LogConfig struct {
 	RequestHeader  bool
 	RequestBody    bool
 	ResponseHeader bool
 	ResponseBody   bool
-	Level          string
-	Client         bool
 }
 
 type LogHttpUtil struct {
 	Logger xlog.Logger
-	conf   logConfig
+	Conf   LogConfig
 }
 
 func NewLogHttpUtil(conf fig.Properties, logger xlog.Logger) *LogHttpUtil {
 	ret := &LogHttpUtil{
 		Logger: logger,
 	}
-	conf.GetValue("Log", &ret.conf)
+	conf.GetValue("Log", &ret.Conf)
 	return ret
 }
 
@@ -93,7 +91,7 @@ func (util *LogHttpUtil) LogHttp() gin.HandlerFunc {
 		params := c.Params
 		querys := c.Request.URL.RawQuery
 		reqHeader := ""
-		if util.conf.RequestHeader {
+		if util.Conf.RequestHeader {
 			reqHeader = getHeaderStr(c.Request.Header)
 		}
 
@@ -103,7 +101,7 @@ func (util *LogHttpUtil) LogHttp() gin.HandlerFunc {
 			requestId, path, clientIP, method, reqHeader, params, querys)
 
 		var blw *ResponseBodyLogWriter
-		if util.conf.ResponseBody {
+		if util.Conf.ResponseBody {
 			blw = &ResponseBodyLogWriter{ResponseWriter: c.Writer}
 			c.Writer = blw
 		}
@@ -119,11 +117,11 @@ func (util *LogHttpUtil) LogHttp() gin.HandlerFunc {
 		statusCode := c.Writer.Status()
 
 		var data string
-		if util.conf.ResponseBody {
+		if util.Conf.ResponseBody {
 			data = blw.body.String()
 		}
 		respHeader := ""
-		if util.conf.ResponseHeader {
+		if util.Conf.ResponseHeader {
 			rh := c.Writer.Header()
 			if rh != nil {
 				respHeader = getHeaderStr(rh.Clone())

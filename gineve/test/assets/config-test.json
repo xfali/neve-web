@@ -3,9 +3,7 @@
     "RequestHeader": true,
     "RequestBody": true,
     "ResponseHeader": true,
-    "ResponseBody": true,
-    "Level": "info",
-    "Client": true
+    "ResponseBody": true
   },
   "Server": {
     "ContextPath": "",
