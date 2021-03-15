@@ -79,13 +79,6 @@ func (p *Processor) BeanDestroy() error {
 }
 
 func (p *Processor) start(conf fig.Properties) error {
-	//if conf.Get(ConfigLogRequestBody, "false") == "true" {
-	//	binding.Validator = &midware.RequestBodyLogWriter{
-	//		Logger: p.logger,
-	//		V:      binding.Validator,
-	//	}
-	//}
-
 	r := gin.New()
 	//r.Use(gin.Logger())
 	//r.Use(gin.Recovery())

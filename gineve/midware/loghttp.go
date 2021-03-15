@@ -137,7 +137,7 @@ func (util *LogHttpUtil) LogHttp() gin.HandlerFunc {
 			reqHeader = getHeaderStr(c.Request.Header)
 		}
 
-		c.Set(REQEUST_ID, requestId)
+		//c.Set(REQEUST_ID, requestId)
 
 		var rbw *requestBodyWrapper = nil
 		if util.Conf.RequestBody {
@@ -160,8 +160,8 @@ func (util *LogHttpUtil) LogHttp() gin.HandlerFunc {
 		if util.Conf.RequestBody {
 			reqBody = rbw.body.String()
 		}
-		util.Logger.Infof("[Request %s] [path]: %s , [client ip]: %s , [method]: %s , %s , [params]: %v , [query]: %s %s\n",
-			requestId, path, clientIP, method, reqHeader, params, querys, reqBody)
+		//util.Logger.Infof("[Request %s] [path]: %s , [client ip]: %s , [method]: %s , %s , [params]: %v , [query]: %s %s\n",
+		//	requestId, path, clientIP, method, reqHeader, params, querys, reqBody)
 
 		// 结束时间
 		end := time.Now()
@@ -181,9 +181,13 @@ func (util *LogHttpUtil) LogHttp() gin.HandlerFunc {
 				respHeader = getHeaderStr(rh.Clone())
 			}
 		}
-		respId, _ := c.Get(REQEUST_ID)
-		util.Logger.Infof("[Response %s] [latency]: %d ms, [status]: %d , %s , [data]: %s\n",
-			respId.(string), latency/time.Millisecond, statusCode, respHeader, data)
+		//respId, _ := c.Get(REQEUST_ID)
+		util.Logger.Infof("\n[Request\t%s] [path]: %s , [client ip]: %s , [method]: %s , %s , [params]: %v , [query]: %s %s\n"+
+			"[Response\t%s] [latency]: %d ms, [status]: %d , %s , [data]: %s\n",
+			requestId, path, clientIP, method, reqHeader, params, querys, reqBody,
+			requestId, latency/time.Millisecond, statusCode, respHeader, data)
+		//util.Logger.Infof("[Response %s] [latency]: %d ms, [status]: %d , %s , [data]: %s\n",
+		//	respId.(string), latency/time.Millisecond, statusCode, respHeader, data)
 	}
 }
 
