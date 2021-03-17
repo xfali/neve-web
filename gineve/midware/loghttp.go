@@ -17,12 +17,15 @@ import (
 	"io"
 	"net/http"
 	"reflect"
+	"strings"
 	"time"
 )
 
 const (
 	REQEUST_ID = "_REQEUST_ID"
 )
+
+type logFunc func(fmt string, args ...interface{})
 
 type HttpLogger interface {
 	LogHttp() gin.HandlerFunc
@@ -126,6 +129,10 @@ type LogHttpUtil struct {
 	LogRespHeader bool `fig:"Log.ResponseHeader"`
 	// with response body log
 	LogRespBody bool `fig:"Log.ResponseBody"`
+	// log level
+	Level string `fig:"Log.Level"`
+
+	logFunc logFunc
 }
 
 type DefaultHttpLogger LogHttpUtil
@@ -135,6 +142,7 @@ func NewLogHttpUtil(conf fig.Properties, logger xlog.Logger) *LogHttpUtil {
 		Logger: logger,
 	}
 	fig.Fill(conf, ret)
+	ret.initLog()
 	return ret
 }
 
@@ -201,7 +209,7 @@ func (util *LogHttpUtil) log(c *gin.Context) {
 		}
 	}
 	//respId, _ := c.Get(REQEUST_ID)
-	util.Logger.Infof("\n[Request\t%s] [path]: %s , [client ip]: %s , [method]: %s %s [params]: %v , [query]: %s%s\n"+
+	util.output("\n[Request\t%s] [path]: %s , [client ip]: %s , [method]: %s %s [params]: %v , [query]: %s%s\n"+
 		"[Response\t%s] [latency]: %d ms, [status]: %d %s%s\n",
 		requestId, path, clientIP, method, reqHeader, params, querys, reqBody,
 		requestId, latency/time.Millisecond, statusCode, respHeader, data)
@@ -227,4 +235,30 @@ func getHeaderStr(header http.Header) string {
 	}
 	buf.WriteString(" ,")
 	return buf.String()
+}
+
+func (util *LogHttpUtil) output(fmt string, args ...interface{}) {
+	if util.logFunc == nil {
+		util.Logger.Infof(fmt, args...)
+	} else {
+		util.logFunc(fmt, args...)
+	}
+}
+
+func (util *LogHttpUtil) initLog() {
+	lv := strings.ToLower(util.Level)
+	switch lv {
+	case "debug":
+		util.logFunc = util.Logger.Debugf
+	case "info":
+		util.logFunc = util.Logger.Infof
+	case "warn":
+		util.logFunc = util.Logger.Warnf
+	case "panic":
+		util.logFunc = util.Logger.Panicf
+	case "fatal":
+		util.logFunc = util.Logger.Fatalf
+	default:
+		util.logFunc = util.Logger.Infof
+	}
 }

@@ -3,7 +3,8 @@
     "RequestHeader": true,
     "RequestBody": true,
     "ResponseHeader": true,
-    "ResponseBody": true
+    "ResponseBody": true,
+    "Level": "warn"
   },
   "Server": {
     "ContextPath": "",
