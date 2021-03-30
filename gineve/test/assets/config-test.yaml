@@ -1,0 +1,15 @@
+neve:
+  web:
+    Log:
+      RequestHeader: true
+      RequestBody: true
+      ResponseHeader: true
+      ResponseBody: true
+      Level: "warn"
+
+    Server:
+      ContextPath: ""
+      Port: 8080
+      ReadTimeout: 15
+      WriteTimeout: 15
+      IdleTimeout: 15

@@ -96,7 +96,7 @@ func (p *Processor) start(conf fig.Properties) error {
 	//}
 	//r.Use(logU.LogHttp())
 	servConf := serverConf{}
-	conf.GetValue("Server", &servConf)
+	conf.GetValue("neve.web.Server", &servConf)
 	if servConf.Port == 0 {
 		servConf.Port = 8080
 	}

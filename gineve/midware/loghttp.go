@@ -121,6 +121,8 @@ func (v *RequestBodyLogWriter) Engine() interface{} {
 
 type LogHttpUtil struct {
 	Logger xlog.Logger
+
+	ignore struct{} `figPx:"neve.web"`
 	// with request header log
 	LogReqHeader bool `fig:"Log.RequestHeader"`
 	// with request body log

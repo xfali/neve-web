@@ -54,7 +54,7 @@ func (b *webBean) HttpRoutes(engine gin.IRouter) {
 }
 
 func TestWebAndValue(t *testing.T) {
-	app := neve.NewFileConfigApplication("assets/config-test.json")
+	app := neve.NewFileConfigApplication("assets/config-test.yaml")
 	app.RegisterBean(gineve.NewProcessor())
 	app.RegisterBean(processor.NewValueProcessor())
 	app.RegisterBean(&testProcess{})
