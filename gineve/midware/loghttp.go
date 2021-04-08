@@ -75,6 +75,11 @@ func (w *responseBodyLogWrapper) Write(b []byte) (int, error) {
 	return w.ResponseWriter.Write(b)
 }
 
+func (w *responseBodyLogWrapper) WriteString(s string) (int, error) {
+	w.body.WriteString(s)
+	return w.ResponseWriter.WriteString(s)
+}
+
 func newResponseBodyWrapper(w gin.ResponseWriter) *responseBodyLogWrapper {
 	ret := &responseBodyLogWrapper{
 		ResponseWriter: w,
