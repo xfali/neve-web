@@ -33,16 +33,15 @@ func (b *webBean) HttpRoutes(engine gin.IRouter) {
 	//	LogRespBody:   true,
 	//	LogRespHeader: true,
 	//}
-	loghttp := b.HttpLogger
-	engine.GET("test", loghttp.LogHttp(), func(context *gin.Context) {
+	engine.GET("test", b.HttpLogger.LogHttp(), func(context *gin.Context) {
 		context.JSON(http.StatusOK, result.Ok(b.V))
 	})
 
-	engine.GET("panic", loghttp.LogHttp(), func(context *gin.Context) {
+	engine.GET("panic", b.HttpLogger.LogHttp(), func(context *gin.Context) {
 		panic("test!")
 	})
 
-	engine.POST("test", loghttp.LogHttp(), func(context *gin.Context) {
+	engine.POST("test", b.HttpLogger.LogHttp(), func(context *gin.Context) {
 		d, err := context.GetRawData()
 		if err != nil {
 			context.AbortWithStatus(http.StatusBadRequest)
