@@ -67,15 +67,15 @@ func (b *webBean) HttpRoutes(engine gin.IRouter) {
 ```
 
 ### 4. 输出日志配置
-注入midware.HttpLogger，在gin.IRouter中添加该handler
+注入loghttp.HttpLogger，在gin.IRouter中添加该handler
 ```
 type webBean struct {
 	V          string //`fig:"Log.Level"`
 	//注入
-	HttpLogger midware.HttpLogger `inject:""`
+	HttpLogger loghttp.HttpLogger `inject:""`
 }
 func (b *webBean) HttpRoutes(engine gin.IRouter) {
-    //使用，注意“b.HttpLogger.LogHttp()”
+    //使用“b.HttpLogger.LogHttp()”配置，作为首个handler
 	engine.GET("test", b.HttpLogger.LogHttp(), func(context *gin.Context) {
 		context.JSON(http.StatusOK, result.Ok(b.V))
 	})
