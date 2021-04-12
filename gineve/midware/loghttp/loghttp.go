@@ -187,7 +187,7 @@ func (util *LogHttpUtil) clone(opts ...LogOpt) *LogHttpUtil {
 	ret.Level = util.Level
 
 	for _, opt := range opts {
-		opt(util)
+		opt(ret)
 	}
 
 	ret.initLog()
@@ -328,6 +328,8 @@ func (util *LogHttpUtil) initLog() {
 		util.logFunc = util.Logger.Infof
 	case "warn":
 		util.logFunc = util.Logger.Warnf
+	case "error":
+		util.logFunc = util.Logger.Errorf
 	case "panic":
 		util.logFunc = util.Logger.Panicf
 	case "fatal":
@@ -361,7 +363,7 @@ func (util *hLogger) clone(opts ...LogOpt) *hLogger {
 	ret.pool = util.pool
 
 	for _, opt := range opts {
-		opt(util)
+		opt(ret)
 	}
 
 	ret.initLog()

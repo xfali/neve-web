@@ -50,6 +50,56 @@ func (b *webBean) HttpRoutes(engine gin.IRouter) {
 
 		context.JSON(http.StatusOK, result.Ok(string(d)))
 	})
+
+	engine.POST("/no/req/header", b.HttpLogger.OptLogHttp(loghttp.DisableLogReqHeader()), func(context *gin.Context) {
+		d, err := context.GetRawData()
+		if err != nil {
+			context.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		context.Writer.WriteString(string(d))
+	})
+
+	engine.POST("/no/req/body", b.HttpLogger.OptLogHttp(loghttp.DisableLogReqBody()), func(context *gin.Context) {
+		d, err := context.GetRawData()
+		if err != nil {
+			context.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		context.Writer.WriteString(string(d))
+	})
+
+	engine.POST("/no/resp/header", b.HttpLogger.OptLogHttp(loghttp.DisableLogRespHeader()), func(context *gin.Context) {
+		d, err := context.GetRawData()
+		if err != nil {
+			context.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		context.Writer.WriteString(string(d))
+	})
+
+	engine.POST("/no/resp/body", b.HttpLogger.OptLogHttp(loghttp.DisableLogRespBody()), func(context *gin.Context) {
+		d, err := context.GetRawData()
+		if err != nil {
+			context.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		context.Writer.WriteString(string(d))
+	})
+
+	engine.POST("/error", b.HttpLogger.OptLogHttp(loghttp.OptLogLevel("error")), func(context *gin.Context) {
+		d, err := context.GetRawData()
+		if err != nil {
+			context.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+
+		context.Writer.WriteString(string(d))
+	})
 }
 
 func TestWebAndValue(t *testing.T) {
