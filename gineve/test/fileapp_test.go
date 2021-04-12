@@ -13,7 +13,7 @@ import (
 	"github.com/xfali/neve-core/bean"
 	"github.com/xfali/neve-core/processor"
 	"github.com/xfali/neve-web/gineve"
-	"github.com/xfali/neve-web/gineve/midware"
+	"github.com/xfali/neve-web/gineve/midware/loghttp"
 	"github.com/xfali/neve-web/result"
 	"net/http"
 	"testing"
@@ -21,8 +21,8 @@ import (
 
 type webBean struct {
 	V          string //`fig:"Log.Level"`
-	P          print  `inject:"testProcess.print"`
-	HttpLogger midware.HttpLogger `inject:""`
+	P          print              `inject:"testProcess.print"`
+	HttpLogger loghttp.HttpLogger `inject:""`
 }
 
 func (b *webBean) HttpRoutes(engine gin.IRouter) {

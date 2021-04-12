@@ -11,6 +11,7 @@ import (
 	"github.com/xfali/fig"
 	"github.com/xfali/neve-core/bean"
 	"github.com/xfali/neve-web/gineve/midware"
+	"github.com/xfali/neve-web/gineve/midware/loghttp"
 	"github.com/xfali/neve-web/result"
 	"github.com/xfali/xlog"
 	"net/http"
@@ -55,7 +56,7 @@ func NewProcessor(opts ...Opt) *Processor {
 
 func (p *Processor) Init(conf fig.Properties, container bean.Container) error {
 	p.conf = conf
-	container.Register(midware.NewLogHttpUtil(conf, p.logger))
+	container.Register(loghttp.NewLogHttpUtil(conf, p.logger))
 	return nil
 }
 
