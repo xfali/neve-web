@@ -402,6 +402,8 @@ func (util *hLogger) log(c *gin.Context) {
 		c.Request.Body.Close()
 		reqBody = string(reqBodyWrapper.Bytes())
 		c.Request.Body = reqBodyWrapper
+		// Must close here to release buffer.
+		defer reqBodyWrapper.Close()
 	}
 
 	var blw *responseBodyWriter
@@ -412,11 +414,11 @@ func (util *hLogger) log(c *gin.Context) {
 	}
 
 	if util.LogReqBody {
-		util.Logger.Infof("[Request\t%s] [path]: %s , [client ip]: %s , [method]: %s %s [params]: %v , [query]: %s [data]: %s\n",
-			requestId, path, clientIP, method, reqHeaderBuf.String(), params, querys, reqBody)
+		util.output("[Request  %s] [path]: %s , [method]: %s , [client ip]: %s %s [params]: %v , [query]: %s [data]: %s\n",
+			requestId, path, method, clientIP, reqHeaderBuf.String(), params, querys, reqBody)
 	} else {
-		util.Logger.Infof("[Request\t%s] [path]: %s , [client ip]: %s , [method]: %s %s [params]: %v , [query]: %s\n",
-			requestId, path, clientIP, method, reqHeaderBuf.String(), params, querys)
+		util.output("[Request  %s] [path]: %s , [method]: %s , [client ip]: %s %s [params]: %v , [query]: %s\n",
+			requestId, path, method, clientIP, reqHeaderBuf.String(), params, querys)
 	}
 
 	// 处理请求
@@ -441,7 +443,7 @@ func (util *hLogger) log(c *gin.Context) {
 			getHeaderBuffer(respHeaderBuf, rh.Clone())
 		}
 	}
-	util.output("[Response\t%s] [path]: %s , [method]: %s , [latency]: %d ms, [status]: %d %s%s\n",
+	util.output("[Response %s] [path]: %s , [method]: %s , [latency]: %d ms, [status]: %d %s%s\n",
 		requestId, path, method, latency/time.Millisecond, statusCode, respHeaderBuf.String(), data)
 }
 

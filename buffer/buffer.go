@@ -7,8 +7,10 @@ package buffer
 
 import (
 	"bytes"
+	"github.com/xfali/xlog"
 	"io"
 	"sync"
+	"sync/atomic"
 )
 
 const (
@@ -25,6 +27,9 @@ type defaultPool struct {
 	initialSize int
 	maxSize     int
 	pool        sync.Pool
+
+	count int32
+	Debug bool
 }
 
 type Opt func(*defaultPool)
@@ -58,6 +63,9 @@ func OptSetMaxBufferSize(size int) Opt {
 func (p *defaultPool) Get() *bytes.Buffer {
 	buf := p.pool.Get().(*bytes.Buffer)
 	buf.Reset()
+	if p.Debug {
+		xlog.Errorf("pool %p get : %d %p", p, atomic.AddInt32(&p.count, 1), buf)
+	}
 	return buf
 }
 
@@ -66,9 +74,15 @@ func (p *defaultPool) Put(buf *bytes.Buffer) {
 		return
 	}
 	if buf.Len() > p.maxSize {
+		if p.Debug {
+			xlog.Errorf("pool %p return and wait for GC : %d %p", p, atomic.AddInt32(&p.count, 1), buf)
+		}
 		return
 	}
 	p.pool.Put(buf)
+	if p.Debug {
+		xlog.Errorf("pool %p Put : %d %p", p, atomic.AddInt32(&p.count, 1), buf)
+	}
 }
 
 type ContentLength interface {

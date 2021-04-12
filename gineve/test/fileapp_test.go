@@ -15,6 +15,7 @@ import (
 	"github.com/xfali/neve-web/gineve"
 	"github.com/xfali/neve-web/gineve/midware/loghttp"
 	"github.com/xfali/neve-web/result"
+	"github.com/xfali/xlog"
 	"net/http"
 	"testing"
 )
@@ -97,6 +98,7 @@ func (b *webBean) HttpRoutes(engine gin.IRouter) {
 			context.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
+		xlog.Infoln(string(d))
 
 		context.Writer.WriteString(string(d))
 	})
