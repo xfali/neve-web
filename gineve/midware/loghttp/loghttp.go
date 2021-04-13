@@ -30,6 +30,13 @@ const (
 	LogRespHeaderKey = "neve.web.Log.ResponseHeader"
 	LogRespBodyKey   = "neve.web.Log.ResponseBody"
 	LogLevelKey      = "neve.web.Log.Level"
+
+	LogLevelDebug = "debug"
+	LogLevelInfo  = "info"
+	LogLevelWarn  = "warn"
+	LogLevelError = "error"
+	LogLevelPanic = "panic"
+	LogLevelFatal = "fatal"
 )
 
 type logFunc func(fmt string, args ...interface{})
@@ -41,6 +48,8 @@ type HttpLogger interface {
 	LogHttp() gin.HandlerFunc
 	// 按参数配置日志handler
 	OptLogHttp(opts ...LogOpt) gin.HandlerFunc
+	// 根据参数配置Clone出新的HttpLogger
+	Clone(opts ...LogOpt) HttpLogger
 }
 
 type Setter interface {
@@ -171,6 +180,10 @@ func NewLogHttpUtil(conf fig.Properties, logger xlog.Logger) *LogHttpUtil {
 
 func (util *LogHttpUtil) LogHttp() gin.HandlerFunc {
 	return util.log
+}
+
+func (util *LogHttpUtil) Clone(opts ...LogOpt) HttpLogger {
+	return util.clone(opts...)
 }
 
 func (util *LogHttpUtil) OptLogHttp(opts ...LogOpt) gin.HandlerFunc {
@@ -322,17 +335,17 @@ func (util *LogHttpUtil) output(fmt string, args ...interface{}) {
 func (util *LogHttpUtil) initLog() {
 	lv := strings.ToLower(util.Level)
 	switch lv {
-	case "debug":
+	case LogLevelDebug:
 		util.logFunc = util.Logger.Debugf
-	case "info":
+	case LogLevelInfo:
 		util.logFunc = util.Logger.Infof
-	case "warn":
+	case LogLevelWarn:
 		util.logFunc = util.Logger.Warnf
-	case "error":
+	case LogLevelError:
 		util.logFunc = util.Logger.Errorf
-	case "panic":
+	case LogLevelPanic:
 		util.logFunc = util.Logger.Panicf
-	case "fatal":
+	case LogLevelFatal:
 		util.logFunc = util.Logger.Fatalf
 	default:
 		util.logFunc = util.Logger.Infof
@@ -344,11 +357,29 @@ type hLogger struct {
 	pool buffer.Pool
 }
 
-func NewHttpLogger(conf fig.Properties, logger xlog.Logger) *hLogger {
+func NewFromConfig(conf fig.Properties, logger xlog.Logger) *hLogger {
 	ret := &hLogger{
 		LogHttpUtil: *NewLogHttpUtil(conf, logger),
 		pool:        buffer.NewPool(),
 	}
+	return ret
+}
+
+func NewHttpLogger(logger xlog.Logger, opts ...LogOpt) *hLogger {
+	ret := &hLogger{}
+	ret.Logger = logger
+	ret.LogReqHeader = true
+	ret.LogReqBody = true
+	ret.LogRespHeader = true
+	ret.LogRespBody = true
+	ret.Level = "info"
+	ret.pool = buffer.NewPool()
+
+	for _, opt := range opts {
+		opt(ret)
+	}
+
+	ret.initLog()
 	return ret
 }
 
@@ -376,6 +407,10 @@ func (util *hLogger) LogHttp() gin.HandlerFunc {
 
 func (util *hLogger) OptLogHttp(opts ...LogOpt) gin.HandlerFunc {
 	return util.clone(opts...).log
+}
+
+func (util *hLogger) Clone(opts ...LogOpt) HttpLogger {
+	return util.clone(opts...)
 }
 
 func (util *hLogger) log(c *gin.Context) {
@@ -414,10 +449,10 @@ func (util *hLogger) log(c *gin.Context) {
 	}
 
 	if util.LogReqBody {
-		util.output("[Request  %s] [path]: %s , [method]: %s , [client ip]: %s %s [params]: %v , [query]: %s [data]: %s\n",
+		util.output("[Request  %s] [path]: %s , [method]: %s , [client ip]: %s %s, [params]: %v , [query]: %s , [data]: %s\n",
 			requestId, path, method, clientIP, reqHeaderBuf.String(), params, querys, reqBody)
 	} else {
-		util.output("[Request  %s] [path]: %s , [method]: %s , [client ip]: %s %s [params]: %v , [query]: %s\n",
+		util.output("[Request  %s] [path]: %s , [method]: %s , [client ip]: %s %s, [params]: %v , [query]: %s\n",
 			requestId, path, method, clientIP, reqHeaderBuf.String(), params, querys)
 	}
 
@@ -457,7 +492,7 @@ func newResponseBodyWriter(w gin.ResponseWriter, rwc *buffer.ReadWriteCloser) *r
 		ResponseWriter: w,
 		body:           rwc,
 	}
-	ret.body.Write([]byte(" [data]: "))
+	ret.body.Write([]byte(" , [data]: "))
 	return ret
 }
 
@@ -493,6 +528,6 @@ func getHeaderBuffer(buf *bytes.Buffer, header http.Header) {
 			}
 			buf.WriteString(" ")
 		}
+		buf.WriteString(" ")
 	}
-	buf.WriteString(" ,")
 }

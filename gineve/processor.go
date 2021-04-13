@@ -10,8 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/xfali/fig"
 	"github.com/xfali/neve-core/bean"
-	"github.com/xfali/neve-web/gineve/midware"
 	"github.com/xfali/neve-web/gineve/midware/loghttp"
+	"github.com/xfali/neve-web/gineve/midware/recovery"
 	"github.com/xfali/neve-web/result"
 	"github.com/xfali/xlog"
 	"net/http"
@@ -40,6 +40,10 @@ type Processor struct {
 	server *http.Server
 
 	compList []Component
+
+	panicHandler recovery.PanicHandler
+	httpLogger   loghttp.HttpLogger
+	logAll       bool
 }
 
 type Opt func(p *Processor)
@@ -47,6 +51,9 @@ type Opt func(p *Processor)
 func NewProcessor(opts ...Opt) *Processor {
 	ret := &Processor{
 		logger: xlog.GetLogger(),
+		panicHandler: func(ctx *gin.Context, err interface{}) {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, result.InternalError)
+		},
 	}
 	for _, v := range opts {
 		v(ret)
@@ -56,7 +63,10 @@ func NewProcessor(opts ...Opt) *Processor {
 
 func (p *Processor) Init(conf fig.Properties, container bean.Container) error {
 	p.conf = conf
-	container.Register(loghttp.NewHttpLogger(conf, p.logger))
+	if p.httpLogger == nil {
+		p.httpLogger = loghttp.NewFromConfig(conf, p.logger)
+	}
+	container.Register(p.httpLogger)
 	return nil
 }
 
@@ -84,17 +94,18 @@ func (p *Processor) start(conf fig.Properties) error {
 	r := gin.New()
 	//r.Use(gin.Logger())
 	//r.Use(gin.Recovery())
-	panicU := &midware.RecoveryUtil{
-		Logger: p.logger,
-		PanicHandler: func(ctx *gin.Context, err interface{}) {
-			ctx.AbortWithStatusJSON(http.StatusInternalServerError, result.InternalError)
-		},
+	panicU := &recovery.RecoveryUtil{
+		Logger:       p.logger,
+		PanicHandler: p.panicHandler,
 	}
 	r.Use(panicU.Recovery())
 	//logU := &midware.LogHttpUtil{
 	//	Logger:      p.logger,
 	//	LogRespBody: conf.Get(ConfigLogRequestBody, "false") == "true",
 	//}
+	if p.logAll {
+		r.Use(p.httpLogger.LogHttp())
+	}
 	//r.Use(logU.LogHttp())
 	servConf := serverConf{}
 	conf.GetValue("neve.web.Server", &servConf)
@@ -144,5 +155,21 @@ func (p *Processor) parseBean(comp Component, o interface{}) error {
 func OptSetLogger(logger xlog.Logger) Opt {
 	return func(p *Processor) {
 		p.logger = logger
+	}
+}
+
+func OptSetPanicHandler(h recovery.PanicHandler) Opt {
+	return func(p *Processor) {
+		p.panicHandler = h
+	}
+}
+
+// 配置默认的HttpLogger
+// 如果all为true，则将为所有的接口添加该logger；
+// 如果all为false，则用户需要使用inject Logger的方式，手工添加接口日志。
+func OptSetDefaultHttpLogger(logger loghttp.HttpLogger, all bool) Opt {
+	return func(p *Processor) {
+		p.httpLogger = logger
+		p.logAll = all
 	}
 }

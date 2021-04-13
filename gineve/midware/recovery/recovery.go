@@ -4,7 +4,7 @@
 // @version V1.0
 // Description:
 
-package midware
+package recovery
 
 import (
 	"bytes"
@@ -19,9 +19,11 @@ import (
 	"strings"
 )
 
+type PanicHandler func(ctx *gin.Context, err interface{})
+
 type RecoveryUtil struct {
 	Logger       xlog.Logger
-	PanicHandler func(ctx *gin.Context, err interface{})
+	PanicHandler PanicHandler
 }
 
 func (u *RecoveryUtil) Recovery() gin.HandlerFunc {
