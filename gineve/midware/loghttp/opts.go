@@ -7,7 +7,7 @@ package loghttp
 
 func OptLogReqHeader(flag bool) LogOpt {
 	return func(setter Setter) {
-		setter.Set("neve.web.Log.RequestHeader", flag)
+		setter.Set(LogReqHeaderKey, flag)
 	}
 }
 
@@ -21,7 +21,7 @@ func DisableLogReqHeader() LogOpt {
 
 func OptLogReqBody(flag bool) LogOpt {
 	return func(setter Setter) {
-		setter.Set("neve.web.Log.RequestBody", flag)
+		setter.Set(LogReqBodyKey, flag)
 	}
 }
 
@@ -35,7 +35,7 @@ func DisableLogReqBody() LogOpt {
 
 func OptLogRespHeader(flag bool) LogOpt {
 	return func(setter Setter) {
-		setter.Set("neve.web.Log.ResponseHeader", flag)
+		setter.Set(LogRespHeaderKey, flag)
 	}
 }
 
@@ -49,7 +49,7 @@ func DisableLogRespHeader() LogOpt {
 
 func OptLogRespBody(flag bool) LogOpt {
 	return func(setter Setter) {
-		setter.Set("neve.web.Log.ResponseBody", flag)
+		setter.Set(LogRespBodyKey, flag)
 	}
 }
 
@@ -63,7 +63,7 @@ func DisableLogRespBody() LogOpt {
 
 func OptLogLevel(lv string) LogOpt {
 	return func(setter Setter) {
-		setter.Set("neve.web.Log.Level", lv)
+		setter.Set(LogLevelKey, lv)
 	}
 }
 

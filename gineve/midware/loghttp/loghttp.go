@@ -25,11 +25,11 @@ import (
 const (
 	REQEUST_ID = "_REQEUST_ID"
 
-	LogReqHeaderKey  = "neve.web.Log.RequestHeader"
-	LogReqBodyKey    = "neve.web.Log.RequestBody"
-	LogRespHeaderKey = "neve.web.Log.ResponseHeader"
-	LogRespBodyKey   = "neve.web.Log.ResponseBody"
-	LogLevelKey      = "neve.web.Log.Level"
+	LogReqHeaderKey  = "neve.web.log.requestHeader"
+	LogReqBodyKey    = "neve.web.log.requestBody"
+	LogRespHeaderKey = "neve.web.log.responseHeader"
+	LogRespBodyKey   = "neve.web.log.responseBody"
+	LogLevelKey      = "neve.web.log.level"
 
 	LogLevelDebug = "debug"
 	LogLevelInfo  = "info"
@@ -154,15 +154,15 @@ type LogHttpUtil struct {
 
 	ignore struct{} `figPx:"neve.web"`
 	// with request header log
-	LogReqHeader bool `fig:"Log.RequestHeader"`
+	LogReqHeader bool `fig:"log.requestHeader"`
 	// with request body log
-	LogReqBody bool `fig:"Log.RequestBody"`
+	LogReqBody bool `fig:"log.requestBody"`
 	// with response header log
-	LogRespHeader bool `fig:"Log.ResponseHeader"`
+	LogRespHeader bool `fig:"log.responseHeader"`
 	// with response body log
-	LogRespBody bool `fig:"Log.ResponseBody"`
+	LogRespBody bool `fig:"log.responseBody"`
 	// log level
-	Level string `fig:"Log.Level"`
+	Level string `fig:"log.level"`
 
 	logFunc logFunc
 }

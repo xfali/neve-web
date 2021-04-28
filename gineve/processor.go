@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	ConfigLogRequestBody = "Log.RequestBody"
+	ConfigLogRequestBody = "log.requestBody"
 )
 
 //func init() {
@@ -108,7 +108,7 @@ func (p *Processor) start(conf fig.Properties) error {
 	}
 	//r.Use(logU.LogHttp())
 	servConf := serverConf{}
-	conf.GetValue("neve.web.Server", &servConf)
+	conf.GetValue("neve.web.server", &servConf)
 	if servConf.Port == 0 {
 		servConf.Port = 8080
 	}

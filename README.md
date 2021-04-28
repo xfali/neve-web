@@ -28,22 +28,22 @@ app.Run()
 ```
 neve:
   web:
-    Log:
-      RequestHeader: true
-      RequestBody: true
-      ResponseHeader: true
-      ResponseBody: true
-      Level: "warn"
+    log:
+      requestHeader: true
+      requestBody: true
+      responseHeader: true
+      responseBody: true
+      level: "warn"
 
-    Server:
-      ContextPath: ""
-      Port: 8080
-      ReadTimeout: 15
-      WriteTimeout: 15
-      IdleTimeout: 15
+    server:
+      contextPath: ""
+      port: 8080
+      readTimeout: 15
+      writeTimeout: 15
+      idleTimeout: 15
 ```
 * 【neve.web.log】配置rest的日志输出，包含request header、body，response header、body以及配置日志级别，根据项目需要进行配置。
-* 【neve.web.Server】配置WEB服务的端口、读写超时等配置，ContextPath配置总的根路由路径，如ContextPath: "/order"
+* 【neve.web.server】配置WEB服务的端口、读写超时等配置，contextPath配置总的根路由路径，如contextPath: "/order"
 
 ### 3. 注册路由
 注册的bean实现 HttpRoutes(engine gin.IRouter)方法
