@@ -41,6 +41,8 @@ type Processor struct {
 
 	compList []Component
 
+	filters gin.HandlersChain
+
 	panicHandler recovery.PanicHandler
 	httpLogger   loghttp.HttpLogger
 	logAll       bool
@@ -94,19 +96,22 @@ func (p *Processor) start(conf fig.Properties) error {
 	r := gin.New()
 	//r.Use(gin.Logger())
 	//r.Use(gin.Recovery())
-	panicU := &recovery.RecoveryUtil{
-		Logger:       p.logger,
-		PanicHandler: p.panicHandler,
+
+	if p.panicHandler != nil {
+		panicU := &recovery.RecoveryUtil{
+			Logger:       p.logger,
+			PanicHandler: p.panicHandler,
+		}
+		r.Use(panicU.Recovery())
 	}
-	r.Use(panicU.Recovery())
-	//logU := &midware.LogHttpUtil{
-	//	Logger:      p.logger,
-	//	LogRespBody: conf.Get(ConfigLogRequestBody, "false") == "true",
-	//}
 	if p.logAll {
 		r.Use(p.httpLogger.LogHttp())
 	}
-	//r.Use(logU.LogHttp())
+
+	if len(p.filters) > 0 {
+		r.Use(p.filters...)
+	}
+
 	servConf := serverConf{}
 	conf.GetValue("neve.web.server", &servConf)
 	if servConf.Port == 0 {
@@ -171,5 +176,11 @@ func OptSetDefaultHttpLogger(logger loghttp.HttpLogger, all bool) Opt {
 	return func(p *Processor) {
 		p.httpLogger = logger
 		p.logAll = all
+	}
+}
+
+func OptAddFilters(filters ...gin.HandlerFunc) Opt {
+	return func(p *Processor) {
+		p.filters = append(p.filters, filters...)
 	}
 }
