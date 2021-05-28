@@ -115,7 +115,7 @@ func TestWebAndValue(t *testing.T) {
 
 type filter struct{}
 
-func (f *filter) GlobalFilter(context *gin.Context) {
+func (f *filter) FilterHandler(context *gin.Context) {
 	v, have := context.Get("hello")
 	if !have {
 		xlog.Panic("not have!")
@@ -124,7 +124,11 @@ func (f *filter) GlobalFilter(context *gin.Context) {
 		xlog.Panic("not match!")
 	}
 	xlog.Infoln(v)
-	context.Abort()
+	if context.FullPath() == "/panic" {
+		context.Abort()
+	} else {
+		context.Next()
+	}
 }
 
 func TestWebFilters(t *testing.T) {

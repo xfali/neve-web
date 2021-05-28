@@ -158,7 +158,7 @@ func (p *Processor) parseBean(comp Component) error {
 }
 
 func (p *Processor) parseFilter(filter Filter) error {
-	p.filters = append(p.filters, filter.GlobalFilter)
+	p.filters = append(p.filters, filter.FilterHandler)
 	return nil
 }
 

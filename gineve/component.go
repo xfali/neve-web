@@ -12,5 +12,5 @@ type Component interface {
 }
 
 type Filter interface {
-	GlobalFilter(ctx *gin.Context)
+	FilterHandler(ctx *gin.Context)
 }

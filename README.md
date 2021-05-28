@@ -83,11 +83,11 @@ func (b *webBean) HttpRoutes(engine gin.IRouter) {
 ```
 
 ### 5. 注册全局过滤器
-1. 注册的bean实现 GlobalFilter(ctx *gin.Context) 方法
+1. 注册的bean实现 FilterHandler(ctx *gin.Context) 方法
 ```
 type filter struct{}
 
-func (f *filter) GlobalFilter(context *gin.Context) {
+func (f *filter) FilterHandler(context *gin.Context) {
     if f.pass() {
         // 继续执行
         context.Next()
