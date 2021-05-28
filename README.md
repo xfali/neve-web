@@ -81,3 +81,28 @@ func (b *webBean) HttpRoutes(engine gin.IRouter) {
 	})
 }
 ```
+
+### 5. 注册全局过滤器
+1. 注册的bean实现 GlobalFilter(ctx *gin.Context) 方法
+```
+type filter struct{}
+
+func (f *filter) GlobalFilter(context *gin.Context) {
+    if f.pass() {
+        // 继续执行
+        context.Next()
+    } else {
+        // 过滤并阻断
+        context.Abort()
+    }
+}
+```
+过滤器执行的顺序遵循bean注册的先后顺序
+
+2. 通过NewProcessor时添加过滤器
+```
+app.RegisterBean(gineve.NewProcessor(gineve.OptAddFilters(func(context *gin.Context) {
+		context.Set("hello", "world")
+		context.Next()
+	})))
+```

@@ -113,23 +113,28 @@ func TestWebAndValue(t *testing.T) {
 	app.Run()
 }
 
+type filter struct{}
+
+func (f *filter) GlobalFilter(context *gin.Context) {
+	v, have := context.Get("hello")
+	if !have {
+		xlog.Panic("not have!")
+	}
+	if v.(string) != "world" {
+		xlog.Panic("not match!")
+	}
+	xlog.Infoln(v)
+	context.Abort()
+}
+
 func TestWebFilters(t *testing.T) {
 	app := neve.NewFileConfigApplication("assets/config-test.yaml")
 	app.RegisterBean(gineve.NewProcessor(gineve.OptAddFilters(func(context *gin.Context) {
 		context.Set("hello", "world")
 		context.Next()
-	}, func(context *gin.Context) {
-		v, have := context.Get("hello")
-		if !have {
-			xlog.Panic("not have!")
-		}
-		if v.(string) != "world" {
-			xlog.Panic("not match!")
-		}
-		xlog.Infoln(v)
-		context.Abort()
 	})))
 	app.RegisterBean(processor.NewValueProcessor())
+	app.RegisterBean(&filter{})
 	app.RegisterBean(&webBean{})
 	app.Run()
 }

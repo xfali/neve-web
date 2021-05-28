@@ -10,3 +10,7 @@ import "github.com/gin-gonic/gin"
 type Component interface {
 	HttpRoutes(engine gin.IRouter)
 }
+
+type Filter interface {
+	GlobalFilter(ctx *gin.Context)
+}

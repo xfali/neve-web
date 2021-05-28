@@ -75,8 +75,9 @@ func (p *Processor) Init(conf fig.Properties, container bean.Container) error {
 func (p *Processor) Classify(o interface{}) (bool, error) {
 	switch v := o.(type) {
 	case Component:
-		err := p.parseBean(v, o)
-		return true, err
+		return true, p.parseBean(v)
+	case Filter:
+		return true, p.parseFilter(v)
 	}
 	return false, nil
 }
@@ -151,9 +152,13 @@ func (p *Processor) start(conf fig.Properties) error {
 	return nil
 }
 
-func (p *Processor) parseBean(comp Component, o interface{}) error {
+func (p *Processor) parseBean(comp Component) error {
 	p.compList = append(p.compList, comp)
+	return nil
+}
 
+func (p *Processor) parseFilter(filter Filter) error {
+	p.filters = append(p.filters, filter.GlobalFilter)
 	return nil
 }
 
