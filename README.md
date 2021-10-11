@@ -39,13 +39,18 @@ neve:
 
     server:
       contextPath: ""
+      host: ""
       port: 8080
+      tls:
+        cert: 
+        key:
       readTimeout: 15
       writeTimeout: 15
       idleTimeout: 15
 ```
 * 【neve.web.log】配置rest的日志输出，包含request header、body，response header、body以及配置日志级别，根据项目需要进行配置。
 * 【neve.web.server】配置WEB服务的端口、读写超时等配置，contextPath配置总的根路由路径，如contextPath: "/order"
+* 【neve.web.server.tls】https tls相关配置
 
 ### 3. 注册路由
 注册的bean实现 HttpRoutes(engine gin.IRouter)方法

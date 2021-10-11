@@ -28,10 +28,18 @@ const (
 
 type serverConf struct {
 	ContextPath  string
+	Host         string
 	Port         int
 	ReadTimeout  int
 	WriteTimeout int
 	IdleTimeout  int
+
+	Tls tlsConf
+}
+
+type tlsConf struct {
+	Cert string
+	Key  string
 }
 
 type Processor struct {
@@ -114,7 +122,11 @@ func (p *Processor) start(conf fig.Properties) error {
 	}
 
 	servConf := serverConf{}
-	conf.GetValue("neve.web.server", &servConf)
+	err := conf.GetValue("neve.web.server", &servConf)
+	if err != nil {
+		return err
+	}
+
 	if servConf.Port == 0 {
 		servConf.Port = 8080
 	}
@@ -136,8 +148,9 @@ func (p *Processor) start(conf fig.Properties) error {
 		v.HttpRoutes(router)
 	}
 
+	addr := getServeAddr(servConf)
 	s := &http.Server{
-		Addr:           fmt.Sprintf(":%d", servConf.Port),
+		Addr:           addr,
 		Handler:        r,
 		ReadTimeout:    time.Duration(servConf.ReadTimeout) * time.Second,
 		WriteTimeout:   time.Duration(servConf.WriteTimeout) * time.Second,
@@ -145,7 +158,19 @@ func (p *Processor) start(conf fig.Properties) error {
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	go s.ListenAndServe()
+	go func() {
+		if servConf.Tls.Cert == "" {
+			err := s.ListenAndServe()
+			if err != nil {
+				p.logger.Errorln(err)
+			}
+		} else {
+			err := s.ListenAndServeTLS(servConf.Tls.Cert, servConf.Tls.Key)
+			if err != nil {
+				p.logger.Errorln(err)
+			}
+		}
+	}()
 
 	p.server = s
 
@@ -160,6 +185,23 @@ func (p *Processor) parseBean(comp Component) error {
 func (p *Processor) parseFilter(filter Filter) error {
 	p.filters = append(p.filters, filter.FilterHandler)
 	return nil
+}
+
+func getServeAddr(servConf serverConf) string {
+	//scheme := u.Scheme
+	//if scheme == "" {
+	//	if servConf.Tls.Cert == "" {
+	//		scheme = "http"
+	//	} else {
+	//		scheme = "https"
+	//	}
+	//}
+	//if u.Host != "" {
+	//	u.Port()
+	//	return u.Host
+	//}
+	//fmt.Sprintf("%s://%s:%d", scheme, servConf.Host, servConf.Port)
+	return fmt.Sprintf("%s:%d", servConf.Host, servConf.Port)
 }
 
 func OptSetLogger(logger xlog.Logger) Opt {
