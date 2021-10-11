@@ -14,7 +14,9 @@ go get github.com/xfali/neve-web
 ### 1. neve集成（依赖[neve-core](https://github.com/xfali/neve-core)）
 ```
 app := neve.NewFileConfigApplication("assets/config-test.yaml")
-app.RegisterBean(gineve.NewProcessor())
+app.RegisterBean(neveweb.NewGinProcessor())
+// 或者
+// app.RegisterBean(gineve.NewProcessor())
 //注册值注入处理器，用于根据配置注入值（非必须）
 app.RegisterBean(processor.NewValueProcessor())
 //注册其他对象

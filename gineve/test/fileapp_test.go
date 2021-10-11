@@ -12,6 +12,7 @@ import (
 	"github.com/xfali/neve-core"
 	"github.com/xfali/neve-core/bean"
 	"github.com/xfali/neve-core/processor"
+	"github.com/xfali/neve-web"
 	"github.com/xfali/neve-web/gineve"
 	"github.com/xfali/neve-web/gineve/midware/loghttp"
 	"github.com/xfali/neve-web/result"
@@ -106,7 +107,7 @@ func (b *webBean) HttpRoutes(engine gin.IRouter) {
 
 func TestWebAndValue(t *testing.T) {
 	app := neve.NewFileConfigApplication("assets/config-test.yaml")
-	app.RegisterBean(gineve.NewProcessor())
+	app.RegisterBean(neveweb.NewGinProcessor())
 	app.RegisterBean(processor.NewValueProcessor())
 	app.RegisterBean(&testProcess{})
 	app.RegisterBean(&webBean{})
