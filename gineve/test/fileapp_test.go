@@ -187,3 +187,7 @@ func (p *testProcess) Process() error {
 func (p *testProcess) Close() error {
 	return nil
 }
+
+func (p *testProcess) BeanDestroy() error {
+	return nil
+}
